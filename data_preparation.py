@@ -44,7 +44,7 @@ def get_data(df, mode='original', emd=False, dimension='one', window_size=0):
             #print(df.loc[prev:i])
             print(prev, i)
             st = np.where(df['total_AP'][prev:i] > 0.5)[0][0] + prev
-            end = np.where(df['total_AP'].loc[prev:i] > 0.5)[0][len(np.where(df['total_AP'].loc[prev:i] > 1)[0]) - 1] + prev
+            end = np.where(df['total_AP'].loc[prev:i] > 0.5)[0][len(np.where(df['total_AP'].loc[prev:i] > 0.5)[0]) - 1] + prev
             emd = EMD()
             emd.emd(np.array(df['total_AP'][st:end]))
             imfs, res = emd.get_imfs_and_residue()
@@ -91,12 +91,22 @@ def get_data(df, mode='original', emd=False, dimension='one', window_size=0):
         prev = ind[0]
         k = 0
         if dimension == 'one':
+            print(ind)
             for i in ind[1:]:
-                if np.array(df['total_AP'].loc[prev:i])[:, np.newaxis].shape[0] != 720:
-                    day = np.array(df['total_AP'].loc[prev:i])\
-                    [np.array(df['total_AP'].loc[prev:i])[:, np.newaxis].shape[0] - 720:]
+                #print(i)
+                shape_ = np.array(df['total_AP'].loc[prev:i])[:, np.newaxis].shape[0]
+                if shape_ != 720:
+                    if shape_ > 720:
+                        day = np.array(df['total_AP'].loc[prev:i])\
+                        [shape_ - 720:]
+                    else:
+                        day = np.array(df['total_AP'].loc[prev - (720 - shape_):i])
+                        
                 else:
                     day = np.array(df['total_AP'].loc[prev:i])
+                #print(day)
+                #print(day.shape)
+                print(prev, i, k)
                 ans[k] = day
                 prev = i
                 k += 1
@@ -109,17 +119,25 @@ def get_data(df, mode='original', emd=False, dimension='one', window_size=0):
             df['month'] = df['event_timestamp'].dt.month
             k = 0
             for i in ind[1:]:
-                if np.array(df['total_AP'].loc[prev:i])[:, np.newaxis].shape[0] != 720:
-                    day = np.array(df['total_AP'].loc[prev:i])\
-                    [np.array(df['total_AP'].loc[prev:i])[:, np.newaxis].shape[0] - 720:]
-                    hour = np.array(df['hour'].loc[prev:i])\
-                    [np.array(df['hour'].loc[prev:i])[:, np.newaxis].shape[0] - 720:]
-                    day_ = np.array(df['day'].loc[prev:i])\
-                    [np.array(df['day'].loc[prev:i])[:, np.newaxis].shape[0] - 720:]
-                    weekday = np.array(df['weekday'].loc[prev:i])\
-                    [np.array(df['weekday'].loc[prev:i])[:, np.newaxis].shape[0] - 720:]
-                    month = np.array(df['month'].loc[prev:i])\
-                    [np.array(df['month'].loc[prev:i])[:, np.newaxis].shape[0] - 720:]
+                shape_ = np.array(df['total_AP'].loc[prev:i])[:, np.newaxis].shape[0]
+                if shape_ != 720:
+                    if shape_ > 720:
+                        day = np.array(df['total_AP'].loc[prev:i])\
+                        [shape_ - 720:]
+                        hour = np.array(df['hour'].loc[prev:i])\
+                        [shape_ - 720:]
+                        day_ = np.array(df['day'].loc[prev:i])\
+                        [shape_ - 720:]
+                        weekday = np.array(df['weekday'].loc[prev:i])\
+                        [shape_ - 720:]
+                        month = np.array(df['month'].loc[prev:i])\
+                        [shape_ - 720:]
+                    else:
+                        day = np.array(df['total_AP'].loc[prev - (720 - shape_):i])
+                        hour = np.array(df['hour'].loc[prev - (720 - shape_):i])
+                        day_ = np.array(df['day'].loc[prev - (720 - shape_):i])
+                        weekday = np.array(df['weekday'].loc[prev - (720 - shape_):i])
+                        month = np.array(df['month'].loc[prev - (720 - shape_):i])
                 else:
                     day = np.array(df['total_AP'].loc[prev:i])
                     hour = np.array(df['hour'].loc[prev:i])
